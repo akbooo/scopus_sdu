@@ -394,7 +394,7 @@ COLORS = ["#e8ff47", "#47c8ff", "#ff6b47", "#a47fff", "#47ffb8",
 # ── LOAD DATA ──────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
-    df = pd.read_csv("рез2.csv")
+    df = pd.read_csv("рез2_.csv")
     df.columns = [c.strip() for c in df.columns]
     df = df.rename(columns={
         "Год": "year", "Цитирования": "citations", "Тип документа": "doc_type",
