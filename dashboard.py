@@ -1880,12 +1880,11 @@ elif tab == "👤 AUTHORS":
             st.session_state.author_profile_select = author_list[0] if author_list else None
         selected_author = st.selectbox("Choose author", author_list, key="author_profile_select")
     with p2:
-        min_year = int(fdf["year"].min()) if fdf["year"].notna().any() else 2000
-        max_year = int(fdf["year"].max()) if fdf["year"].notna().any() else 2026
+        min_year = int(df["year"].min()) if df["year"].notna().any() else 2000
+        max_year = int(df["year"].max()) if df["year"].notna().any() else 2026
         if min_year == max_year:
             max_year = min_year + 1
         year_range = st.slider("Years", min_year, max_year, (min_year, max_year), key="author_profile_years")
-
     a_lo, a_hi = year_range
     adf = author_df[
         (author_df["author"] == selected_author) &
@@ -2090,7 +2089,7 @@ elif tab == "👤 AUTHORS":
         st.markdown("<div class='section-label' style='margin-top:18px;'>Top Papers</div>", unsafe_allow_html=True)
         top_p = (
             adf.sort_values("citations", ascending=False)
-            .drop_duplicates(subset=["title", "year"])
+            .drop_duplicates(subset=["title"])
             .head(10)
         )
 
