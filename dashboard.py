@@ -19,7 +19,26 @@ from reportlab.platypus import (
 )
 from reportlab.platypus import Table, TableStyle
 from datetime import datetime
+def check_password():
+    if st.session_state.get("authenticated", False):
+        return True
 
+    st.title("Protected App")
+    st.write("Please enter the password to continue.")
+
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if password == st.secrets["APP_PASSWORD"]:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password")
+
+    return False
+
+if not check_password():
+    st.stop()
 st.set_page_config(page_title="University Research Analytics", page_icon="📚",
                    layout="wide", initial_sidebar_state="expanded")
 
