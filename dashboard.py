@@ -17,26 +17,8 @@ from reportlab.lib.units import mm
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 )
-def check_password():
-    if st.session_state.get("authenticated", False):
-        return True
-
-    st.title("Protected App")
-    st.write("Please enter the password to continue.")
-
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        if password == st.secrets["APP_PASSWORD"]:
-            st.session_state["authenticated"] = True
-            st.rerun()
-        else:
-            st.error("Incorrect password")
-
-    return False
-
-if not check_password():
-    st.stop()
+from reportlab.platypus import Table, TableStyle
+from datetime import datetime
 
 st.set_page_config(page_title="University Research Analytics", page_icon="📚",
                    layout="wide", initial_sidebar_state="expanded")
@@ -996,30 +978,6 @@ def _levenshtein(a, b):
         prev = curr
     return prev[-1]
 
-def _fuzzy_lookup(key, mapping, max_dist=2):
-    """Try fuzzy match on the surname part (before ',') with same first initial.
-    Returns matched info dict or None."""
-    if ',' not in key:
-        return None
-    surname_q, rest_q = key.split(',', 1)
-    surname_q = surname_q.strip()
-    initial_q = rest_q.strip()[:1]  # first char after comma
-    best_info, best_dist = None, max_dist + 1
-    for k, info in mapping.items():
-        if ',' not in k:
-            continue
-        surname_k, rest_k = k.split(',', 1)
-        surname_k = surname_k.strip()
-        initial_k = rest_k.strip()[:1]
-        # First initial must match
-        if initial_q and initial_k and initial_q != initial_k:
-            continue
-        dist = _levenshtein(surname_q, surname_k)
-        if dist <= max_dist and dist < best_dist:
-            best_dist = dist
-            best_info = info
-    return best_info
-
 
 def build_fuzzy_map(mapping, max_dist=2):
     """Pre-compute {any_variant_surname -> canonical_staff_key} for fuzzy matching.
@@ -1120,16 +1078,18 @@ def make_author_pdf(author_name, adf):
 
     # short summary table
     top_journal = "—"
+    
     if "journal" in adf.columns and adf["journal"].notna().any():
         top_journal = adf["journal"].fillna("—").value_counts().idxmax()
-
+        top_journal = Paragraph(top_journal, small_style)
+        
     summary_data = [
         ["Metric", "Value"],
         ["Author", author_name],
         ["Publications", str(papers)],
         ["Total citations", str(total_cites)],
         ["Year range", f"{year_min} - {year_max}"],
-        ["Top journal", str(top_journal)],
+        ["Top journal", top_journal],
     ]
 
     summary_tbl = Table(summary_data, colWidths=[42 * mm, 120 * mm])
@@ -1195,10 +1155,15 @@ def make_author_pdf(author_name, adf):
 
         story.append(Spacer(1, 6))
 
-        # мягкий разрыв через каждые ~12 записей
-        if i % 12 == 0 and i < len(adf):
-            story.append(PageBreak())
+    gen_date = datetime.now().strftime("%d.%m.%Y")
+    from reportlab.platypus import PageBreak
 
+# если документов много — просто всегда перед footer
+    story.append(PageBreak())
+
+    story.append(Paragraph("Vice Rector for Science ____________________", body_style))
+    story.append(Spacer(1, 8))
+    story.append(Paragraph(f"Generation date: {gen_date}", small_style))
     doc.build(story)
     pdf_bytes = buf.getvalue()
     buf.close()
