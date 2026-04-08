@@ -19,26 +19,8 @@ from reportlab.platypus import (
 )
 from reportlab.platypus import Table, TableStyle
 from datetime import datetime
-def check_password():
-    if st.session_state.get("authenticated", False):
-        return True
+from reportlab.platypus import KeepTogether
 
-    st.title("Protected App")
-    st.write("Please enter the password to continue.")
-
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        if password == st.secrets["APP_PASSWORD"]:
-            st.session_state["authenticated"] = True
-            st.rerun()
-        else:
-            st.error("Incorrect password")
-
-    return False
-
-if not check_password():
-    st.stop()
 st.set_page_config(page_title="University Research Analytics", page_icon="📚",
                    layout="wide", initial_sidebar_state="expanded")
 
@@ -1177,12 +1159,17 @@ def make_author_pdf(author_name, adf):
     gen_date = datetime.now().strftime("%d.%m.%Y")
     from reportlab.platypus import PageBreak
 
-# если документов много — просто всегда перед footer
-    story.append(PageBreak())
+    story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Vice Rector for Science ____________________", body_style))
-    story.append(Spacer(1, 8))
-    story.append(Paragraph(f"Generation date: {gen_date}", small_style))
+    if len(adf) > 12:
+        story.append(PageBreak())
+    footer_block = KeepTogether([
+        Paragraph("Vice Rector for Science ____________________", body_style),
+        Spacer(1, 6),
+        Paragraph(f"Generation date: {gen_date}", small_style),
+    ])
+    story.append(footer_block)
+    
     doc.build(story)
     pdf_bytes = buf.getvalue()
     buf.close()
